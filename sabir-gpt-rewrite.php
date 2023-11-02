@@ -83,8 +83,11 @@ function create_new_post_admin_page_content()
     <div class="wrap">
         <h2>Create New Post</h2>
         <form method="post" action="">
-            <label for="url">URL:</label><br>
-            <input type="text" name="url" id="url" size="50" placeholder="Enter your url here"><br><br>
+            <label for="urls">URLs (one per line):</label><br>
+            <textarea name="urls" id="urls" rows="9" cols="50" placeholder="Enter URLs, one per line"></textarea><br><br>
+
+            <!-- <label for="url">URL:</label><br>
+            <input type="text" name="url" id="url" size="50" placeholder="Enter your url here"><br><br> -->
             <!-- <label for="title">Title:</label><br>
             <input name="title" id="gpt_title" type="text" placeholder="Insert the Title here"><br>
             <label for="prompt">Prompt:</label><br>
@@ -94,22 +97,45 @@ function create_new_post_admin_page_content()
         </form>
         <?php
 
-        if (isset($_POST['fetch_metadata']) && !empty($_POST['url'])) {
-            $url = sanitize_text_field($_POST['url']);
-            $metadata = fetch_metadata_from_url($url);
-            if ($metadata) {
-                echo '<p>Meta Title: ' . esc_html($metadata['title']) . '</p>';
-                echo '<p>Meta Description: ' . esc_html($metadata['description']) . '</p>';
-                // Add JavaScript to populate the post title input field.
-                echo '<script>';
-                echo 'document.getElementById("gpt_title").value = "' . esc_js($metadata['title']) . '";';
-                echo '</script>';
-                $title = sanitize_text_field($metadata['title']);
-                $prompt = sanitize_text_field($metadata['title']);
-                create_new_post($title, $prompt, 'publish');
-                echo '<div class="updated"><p>New post created successfully.</p></div>';
-            } else {
-                echo '<p>Error fetching metadata.</p>';
+        if (isset($_POST['fetch_metadata']) && !empty($_POST['urls'])) {
+            // $url = sanitize_text_field($_POST['url']);
+            // $metadata = fetch_metadata_from_url($url);
+            // if ($metadata) {
+            //     echo '<p>Meta Title: ' . esc_html($metadata['title']) . '</p>';
+            //     echo '<p>Meta Description: ' . esc_html($metadata['description']) . '</p>';
+            //     // Add JavaScript to populate the post title input field.
+            //     echo '<script>';
+            //     echo 'document.getElementById("gpt_title").value = "' . esc_js($metadata['title']) . '";';
+            //     echo '</script>';
+            //     $title = sanitize_text_field($metadata['title']);
+            //     $prompt = sanitize_text_field($metadata['title']);
+            //     create_new_post($title, $prompt, 'publish');
+            //     echo '<div class="updated"><p>New post created successfully.</p></div>';
+            // } else {
+            //     echo '<p>Error fetching metadata.</p>';
+            // }
+
+            // print_r(sanitize_text_field($_POST['urls']));
+
+            $urls = explode(" ", sanitize_text_field($_POST['urls']));
+            // $prompt = sanitize_text_field($_POST['prompt']);
+            foreach ($urls as $url) {
+                $url = trim($url);
+                echo "Procesing URL: " . $url . "<br>";
+                if (!empty($url)) {
+                    $metadata = fetch_metadata_from_url($url);
+                    if ($metadata) {
+                        $prompt = sanitize_text_field($metadata['title']);
+                        // $title = sanitize_text_field($metadata['title']);
+                        $title = isset($_POST['post_title']) ? sanitize_text_field($_POST['post_title']) : $metadata['title'];
+                        create_new_post($title, $prompt, 'publish');
+                        echo '<div class="updated"><p>New post created successfully for URL: ' . esc_html($url) . '</p></div>';
+                        echo '<p>Meta Title: ' . esc_html($metadata['title']) . '</p>';
+                        echo '<p>Meta Description: ' . esc_html($metadata['description']) . '</p>';
+                    } else {
+                        echo '<p>Error fetching metadata for URL: ' . esc_html($url) . '</p>';
+                    }
+                }
             }
         }
         // if (isset($_POST['create_post']) && !empty($_POST['prompt'])) {
